@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Shitcord — Log in</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%235865F2'/%3E%3Cpath fill='white' fill-rule='evenodd' d='M50 12C55.6 12 58.8 16 57.6 20.8C68.4 22.8 72.4 30.4 68.4 36C80 38.4 83.2 48 77.6 54.4C85.6 58.4 84 72 72.8 75.2L27.2 75.2C16 72 14.4 58.4 22.4 54.4C16.8 48 20 38.4 31.6 36C27.6 30.4 31.6 22.8 42.4 20.8C41.2 16 44.4 12 50 12ZM34.4 55.6a5.2 7.2 0 1 1 10.4 0a5.2 7.2 0 1 1 -10.4 0ZM55.2 55.6a5.2 7.2 0 1 1 10.4 0a5.2 7.2 0 1 1 -10.4 0Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── shared tokens + common components ── */
+/* Shitcord — login / signup page. Self-contained: no external CSS or JS. */
+
+  :root{
+    --rail:#1E1F22; --side:#2B2D31; --chat:#313338; --box:#383A40;
+    --hover:#35373C; --active:#404249; --line:#3F4147; --deep:#111214;
+    --txt:#F2F3F5; --body:#DBDEE1; --muted:#949BA4; --dim:#80848E;
+    --blurple:#5865F2; --blurple-h:#4752C4;
+    --acc-soft:rgba(88,101,242,.3); --acc-softer:rgba(88,101,242,.16); --acc-text:#DEE0FC; --green:#23A559; --red:#DA373C;
+    --yellow:#E8AC3C; --link:#33A0F0;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{height:100%}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; background:var(--chat); color:var(--body);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased}
+  a{color:var(--link); text-decoration:none; cursor:pointer}
+  a:hover{text-decoration:underline}
+  button{font-family:inherit}
+  :focus-visible{outline:2px solid #3D9EE8; outline-offset:2px; border-radius:3px}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:var(--deep);border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  #stream::-webkit-scrollbar,#feed::-webkit-scrollbar{width:16px}
+  #stream::-webkit-scrollbar-thumb,#feed::-webkit-scrollbar-thumb{background:var(--deep);
+    border:4px solid transparent;background-clip:padding-box;border-radius:8px;min-height:40px}
+  #stream::-webkit-scrollbar-track,#feed::-webkit-scrollbar-track{background:var(--rail);
+    border:4px solid transparent;background-clip:padding-box;border-radius:8px}
+
+  .wordmark{font-family:"Fredoka",Inter,sans-serif; font-weight:600; letter-spacing:-.01em}
+
+
+  /* ── shared form + overlay components ── */
+  .sub{margin:0 0 20px; color:var(--muted); font-size:15px; text-align:center}
+  .field{margin-bottom:20px}
+  .field label{display:block; font-size:12px; font-weight:700; text-transform:uppercase;
+    color:var(--muted); margin-bottom:8px}
+  .field input{width:100%; font:inherit; font-size:16px; color:var(--body); background:var(--deep);
+    border:1px solid var(--deep); border-radius:3px; padding:10px; outline:none}
+  .field input:focus{border-color:#3D9EE8}
+  .field.error label{color:var(--red)}
+  .field.error input{border-color:var(--red)}
+  .field label .err{text-transform:none; font-weight:500; font-style:italic; color:var(--red)}
+  .pw{position:relative}
+  .pw input{padding-right:62px}
+  .toggle{position:absolute; top:50%; right:8px; transform:translateY(-50%); background:none; border:0;
+    font:inherit; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; padding:4px 6px}
+  .toggle:hover{color:var(--body)}
+  .msg{font-size:12.5px; margin:6px 0 0; min-height:18px; color:var(--muted)}
+  .msg.bad{color:var(--red)}
+  .msg.good{color:var(--green)}
+  .alert{display:none; font-size:13.5px; background:rgba(209,64,71,.11); border:1px solid rgba(209,64,71,.4);
+    color:#F0A2A6; border-radius:4px; padding:10px 12px; margin:0 0 18px}
+  .alert.on{display:block}
+  .meter{height:4px;border-radius:99px;background:var(--deep);margin-top:8px;overflow:hidden}
+  .meter i{display:block;height:100%;width:0;border-radius:99px;transition:width .18s,background .18s}
+  button.submit{width:100%; font:inherit; font-weight:500; font-size:16px; color:#fff;
+    background:var(--blurple); border:0; border-radius:3px; padding:11px; cursor:pointer; transition:background .12s}
+  button.submit:hover:not(:disabled){background:var(--blurple-h)}
+  button.submit:disabled{opacity:.5;cursor:not-allowed}
+  button.ghost{width:100%; font:inherit; font-size:14px; font-weight:500; color:var(--body);
+    background:var(--box); border:0; border-radius:3px; padding:10px; cursor:pointer; margin-top:9px}
+  button.ghost:hover{background:var(--active)}
+  .terms{margin:14px 0 0; font-size:12px; color:var(--dim); text-align:center; line-height:1.4}
+  .foot{margin:14px 0 0; font-size:14px; color:var(--muted); min-height:20px}
+  .code{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:17px; text-align:center;
+    letter-spacing:.08em; color:#fff; background:var(--deep); border-radius:4px; padding:14px 10px;
+    margin:0 0 10px; word-break:break-all}
+  .warn{font-size:13px; color:var(--muted); margin:0 0 16px; line-height:1.5}
+  .spinner{text-align:center; color:var(--muted); padding:16px 0}
+  .themepop{position:fixed;z-index:95;width:250px;background:var(--deep);border-radius:8px;
+    padding:16px;display:none;box-shadow:0 8px 24px rgba(0,0,0,.55)}
+  .themepop.on{display:block}
+  .themepop h4{margin:0 0 14px;font-size:12px;font-weight:700;text-transform:uppercase;color:var(--muted)}
+  .themepop label{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;
+    color:var(--body);margin-bottom:7px}
+  .themepop label b{color:var(--muted);font-weight:600;font-size:12px;font-variant-numeric:tabular-nums}
+  .themepop input[type=range]{width:100%;margin:0 0 16px;accent-color:var(--blurple);cursor:pointer}
+  .themepop .swatches{display:flex;gap:4px;margin:0 0 14px}
+  .themepop .swatches i{flex:1;height:22px;border-radius:3px}
+  .themepop .accents{display:flex;gap:6px;margin:0 0 14px}
+  .themepop .accents button{width:auto;flex:1;height:26px;padding:0;border-radius:4px;
+    border:2px solid transparent;background-clip:padding-box}
+  .themepop .accents button.on{border-color:var(--txt)}
+  .themepop button{width:100%;background:var(--box);border:0;border-radius:4px;color:var(--body);
+    font:inherit;font-size:13px;padding:8px;cursor:pointer}
+  .themepop button:hover{background:var(--active)}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;
+    padding:20px;z-index:80}
+  .scrim.on{display:flex}
+  .modal{width:100%;max-width:440px;background:var(--chat);border-radius:5px;padding:24px;max-height:86vh;
+    overflow-y:auto;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+  .modal h3{margin:0 0 8px;font-size:20px;font-weight:600;color:#fff;text-align:center}
+  .modal p.sub{margin:0 0 20px;font-size:14px}
+  .modal .btns{display:flex;gap:9px;margin-top:18px}
+  .modal .btns button{flex:1}
+  .modal .btns button.ghost{margin-top:0;background:none}
+  .modal .btns button.ghost:hover{background:none;text-decoration:underline}
+  .picker{background:var(--deep);border-radius:4px;max-height:220px;overflow-y:auto;padding:4px}
+  .pick{display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;border-radius:4px;font-size:15px}
+  .pick:hover{background:var(--hover)}
+  .pick .av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+    font-size:12px;font-weight:700;color:#0F1013}
+  .pick .nm{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pick input{appearance:none;-webkit-appearance:none;width:20px;height:20px;flex:0 0 auto;
+    border:1.5px solid var(--muted);border-radius:50%;background:none;cursor:pointer}
+  .pick input:checked{background:var(--blurple);border-color:var(--blurple)}
+  .pick input:checked::after{content:"";display:block;width:5px;height:9px;margin:2px auto 0;
+    border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+  .hintbox{font-size:12.5px;color:var(--dim);line-height:1.5;margin:12px 0 0}
+
+  /* ── toast ── */
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--deep);
+    color:var(--body);font-size:13.5px;padding:10px 16px;border-radius:6px;z-index:120;
+    box-shadow:0 6px 20px rgba(0,0,0,.5);opacity:0;transition:opacity .18s;pointer-events:none}
+  .toast.on{opacity:1}
+</style>
+<style>
+  /* ═════ AUTH ═════ */
+  #auth{min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:28px 16px; background:var(--auth-grad,linear-gradient(150deg,#4453B8 0%,#2E3878 42%,#1C2145 100%))}
+  #auth.hide{display:none}
+  .wrap{width:100%; max-width:420px}
+  .logolock{display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px}
+  .logolock svg{width:44px;height:44px;color:#fff}
+  .logolock span{font-size:34px; color:#fff}
+  .card{background:var(--chat); border-radius:5px; padding:32px; box-shadow:0 8px 20px rgba(0,0,0,.36)}
+  .card h1{font-size:24px; font-weight:600; color:#fff; margin:0 0 8px; text-align:center}
+  .view{display:none}
+  .view.on{display:block}
+  input.mono{font-family:ui-monospace,Menlo,Consolas,monospace; letter-spacing:.06em; text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<div id="auth">
+ <div class="wrap">
+  <div class="logolock">
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M50 7C57 7 61 12 59.5 18C73 20.5 78 30 73 37C88 40 92 52 85 60C95 65 93 82 79 86L21 86C7 82 5 65 15 60C8 52 12 40 27 37C22 30 27 20.5 40.5 18C39 12 43 7 50 7ZM30.5 62a6.5 9 0 1 1 13 0a6.5 9 0 1 1 -13 0ZM56.5 62a6.5 9 0 1 1 13 0a6.5 9 0 1 1 -13 0Z"/></svg>
+    <span class="wordmark">Shitcord</span>
+  </div>
+  <div class="card">
+    <div class="alert" id="missing" style="margin-bottom:18px"></div>
+    <div class="view on" id="v-loading"><p class="spinner">Loading…</p></div>
+
+    <form class="view" id="v-signup" novalidate>
+      <h1>Create an account</h1>
+      <p class="sub">IKEA/NINERSMP tuff school GC</p>
+      <div class="alert" id="a-signup"></div>
+      <div class="field" id="f-su-user">
+        <label for="su-user">Username <span class="err" id="e-su-user"></span></label>
+        <input id="su-user" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" maxlength="20">
+        <p class="msg" id="m-su-user" aria-live="polite"></p>
+      </div>
+      <div class="field" id="f-su-pass">
+        <label for="su-pass">Password <span class="err" id="e-su-pass"></span></label>
+        <div class="pw">
+          <input id="su-pass" type="password" autocomplete="new-password">
+          <button class="toggle" type="button" data-peek="su-pass" aria-label="Show password">Show</button>
+        </div>
+        <div class="meter" aria-hidden="true"><i id="su-bar"></i></div>
+        <p class="msg" id="m-su-pass" aria-live="polite"></p>
+      </div>
+      <button class="submit" type="submit" id="btn-signup">Continue</button>
+      <p class="foot">Already have an account? <a data-go="signin">Log In</a></p>
+      <p class="terms">Don't reuse a password from anywhere else — this stores it in the page, not on a real server.</p>
+    </form>
+
+    <form class="view" id="v-signin" novalidate>
+      <h1>Welcome back!</h1>
+      <p class="sub">We're so excited to see you again</p>
+      <div class="alert" id="a-signin"></div>
+      <div class="field" id="f-si-user">
+        <label for="si-user">Username <span class="err" id="e-si-user"></span></label>
+        <input id="si-user" type="text" autocomplete="username" spellcheck="false" autocapitalize="off" maxlength="20">
+      </div>
+      <div class="field" id="f-si-pass">
+        <label for="si-pass">Password <span class="err" id="e-si-pass"></span></label>
+        <div class="pw">
+          <input id="si-pass" type="password" autocomplete="current-password">
+          <button class="toggle" type="button" data-peek="si-pass" aria-label="Show password">Show</button>
+        </div>
+        <p class="msg"><a data-go="recover">Forgot your password?</a></p>
+      </div>
+      <button class="submit" type="submit" id="btn-signin">Log In</button>
+      <p class="foot">Need an account? <a data-go="signup">Register</a></p>
+    </form>
+
+    <form class="view" id="v-recover" novalidate>
+      <h1>Reset password</h1>
+      <p class="sub">Use the recovery code you saved at signup</p>
+      <div class="alert" id="a-recover"></div>
+      <div class="field" id="f-rc-user">
+        <label for="rc-user">Username</label>
+        <input id="rc-user" type="text" spellcheck="false" autocapitalize="off" maxlength="20">
+      </div>
+      <div class="field" id="f-rc-code">
+        <label for="rc-code">Recovery code</label>
+        <input id="rc-code" type="text" class="mono" placeholder="XXXX-XXXX-XXXX" spellcheck="false" maxlength="14">
+      </div>
+      <div class="field" id="f-rc-pass">
+        <label for="rc-pass">New password</label>
+        <div class="pw">
+          <input id="rc-pass" type="password" autocomplete="new-password">
+          <button class="toggle" type="button" data-peek="rc-pass" aria-label="Show password">Show</button>
+        </div>
+        <div class="meter" aria-hidden="true"><i id="rc-bar"></i></div>
+        <p class="msg" id="m-rc-pass" aria-live="polite"></p>
+      </div>
+      <button class="submit" type="submit" id="btn-recover">Set new password</button>
+      <p class="foot"><a data-go="signin">Back to log in</a></p>
+    </form>
+
+    <div class="view" id="v-code">
+      <h1 id="code-title">You're in</h1>
+      <p class="sub">Signed in as <strong id="code-who"></strong></p>
+      <p class="code" id="code-value"></p>
+      <p class="warn">Save this recovery code. Your account has no email on it, so this is the only way back in if you forget your password. It won't be shown again.</p>
+      <button class="submit" type="button" id="btn-enter">Open Shitcord</button>
+      <button class="ghost" type="button" id="btn-copy">Copy code</button>
+    </div>
+  </div>
+ </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── talks to the Pi. No passwords are hashed or stored in the browser. ── */
+var $=function(id){ return document.getElementById(id); };
+function el(t,c,x){ var e=document.createElement(t); if(c) e.className=c; if(x!=null) e.textContent=x; return e; }
+async function api(path,body){
+  var r=await fetch('/api/'+path,{
+    method: body?'POST':'GET',
+    headers:{'Content-Type':'application/json'},
+    credentials:'same-origin',
+    body: body?JSON.stringify(body):undefined
+  });
+  var data={}; try{ data=await r.json(); }catch(e){}
+  if(!r.ok) throw new Error(data.error||('Server said '+r.status));
+  return data;
+}
+
+/* ═══ toast ═══ */
+var toastT;
+function toast(msg){
+  var t=$('toast'); if(!t) return;
+  t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastT); toastT=setTimeout(function(){ t.classList.remove('on'); },2200);
+}
+</script>
+<script>
+(function(){
+/* ═══ auth ═══ */
+function show(v){
+  document.querySelectorAll('#auth .view').forEach(function(x){ x.classList.remove('on'); });
+  var e=$('v-'+v); if(e) e.classList.add('on');
+  document.querySelectorAll('.alert').forEach(function(a){ a.classList.remove('on'); });
+  document.querySelectorAll('.field').forEach(function(f){ f.classList.remove('error'); });
+  document.querySelectorAll('.err').forEach(function(x){ x.textContent=''; });
+  var f=e&&e.querySelector('input');
+  if(f&&window.innerWidth>700) setTimeout(function(){ f.focus(); },30);
+}
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-go]'); if(!t) return; e.preventDefault(); show(t.getAttribute('data-go')); });
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-peek]'); if(!b) return;
+  var i=$(b.getAttribute('data-peek')),s=i.type==='password';
+  i.type=s?'text':'password'; b.textContent=s?'Hide':'Show'; });
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-close]'); if(!b) return;
+  var s=b.closest('.scrim'); if(s) s.classList.remove('on'); });
+function alertMsg(id,t){ var a=$(id); a.textContent=t; a.classList.add('on'); }
+function inlineErr(f,e,t){ $(f).classList.add('error'); if($(e)) $(e).textContent='- '+t; }
+
+var LAB=['','Weak','Fair','Strong','Very strong'],COL=['','#D14047','#D9A83F','#27A05B','#1F8C4E'];
+function strength(v){ var s=0;
+  if(v.length>=8)s++; if(v.length>=14)s++;
+  if(/[^A-Za-z0-9]/.test(v))s++; if(/\d/.test(v)&&/[A-Za-z]/.test(v))s++;
+  return v?Math.min(s,4):0; }
+[['su-pass','su-bar','m-su-pass'],['rc-pass','rc-bar','m-rc-pass']].forEach(function(t){
+  $(t[0]).addEventListener('input',function(){
+    var s=strength(this.value);
+    $(t[1]).style.width=(s*25)+'%'; $(t[1]).style.background=COL[s]||'transparent';
+    var m=$(t[2]); m.textContent=LAB[s]?LAB[s]+' password':''; m.className='msg'; });
+});
+function clean(v){ return v.toLowerCase().replace(/[^a-z0-9._-]/g,''); }
+['su-user','si-user','rc-user'].forEach(function(id){
+  $(id).addEventListener('input',function(){ var v=clean(this.value); if(v!==this.value) this.value=v; }); });
+var chk;
+$('su-user').addEventListener('input',function(){
+  var v=this.value,m=$('m-su-user');
+  clearTimeout(chk); $('f-su-user').classList.remove('error'); $('e-su-user').textContent='';
+  m.textContent=''; m.className='msg';
+  if(v.length<3) return;
+  m.textContent='Checking…';
+  chk=setTimeout(async function(){
+    try{
+      var r=await api('check?name='+encodeURIComponent(v));
+      m.textContent=r.taken?'That username is taken.':'Available.';
+      m.className='msg '+(r.taken?'bad':'good');
+    }catch(e){ m.textContent=''; }
+  },400);
+});
+async function busy(b,l,fn){ var o=b.textContent; b.disabled=true; b.textContent=l;
+  try{ await fn(); } finally{ b.disabled=false; b.textContent=o; } }
+
+
+$('v-signup').addEventListener('submit',function(e){
+  e.preventDefault();
+  busy($('btn-signup'),'Creating…',async function(){
+    $('a-signup').classList.remove('on');
+    ['f-su-user','f-su-pass'].forEach(function(f){ $(f).classList.remove('error'); });
+    $('e-su-user').textContent=''; $('e-su-pass').textContent='';
+    try{
+      var r=await api('signup',{name:clean($('su-user').value.trim()),password:$('su-pass').value});
+      $('su-user').value=''; $('su-pass').value=''; $('su-bar').style.width='0';
+      $('m-su-user').textContent=''; $('m-su-pass').textContent='';
+      codeHandoff("You're in",r.name,r.code);
+    }catch(err){ alertMsg('a-signup',err.message); }
+  });
+});
+
+$('v-signin').addEventListener('submit',function(e){
+  e.preventDefault();
+  busy($('btn-signin'),'Logging in…',async function(){
+    $('a-signin').classList.remove('on');
+    ['f-si-user','f-si-pass'].forEach(function(f){ $(f).classList.remove('error'); });
+    $('e-si-user').textContent=''; $('e-si-pass').textContent='';
+    var u=clean($('si-user').value.trim()), p=$('si-pass').value;
+    if(!u||!p){ alertMsg('a-signin','Enter your username and password.'); return; }
+    try{ await api('login',{name:u,password:p}); goChat(); }
+    catch(err){
+      if(/password/i.test(err.message)){ inlineErr('f-si-pass','e-si-pass','wrong password'); $('si-pass').select(); }
+      else inlineErr('f-si-user','e-si-user','no account with that username');
+    }
+  });
+});
+
+$('v-recover').addEventListener('submit',function(e){
+  e.preventDefault();
+  busy($('btn-recover'),'Resetting…',async function(){
+    $('a-recover').classList.remove('on');
+    ['f-rc-user','f-rc-code','f-rc-pass'].forEach(function(f){ $(f).classList.remove('error'); });
+    try{
+      var r=await api('recover',{name:clean($('rc-user').value.trim()),
+                                 code:$('rc-code').value, password:$('rc-pass').value});
+      $('rc-user').value=''; $('rc-code').value=''; $('rc-pass').value=''; $('rc-bar').style.width='0';
+      codeHandoff('Password changed',r.name,r.code);
+    }catch(err){
+      alertMsg('a-recover',err.message);
+      $('f-rc-user').classList.add('error'); $('f-rc-code').classList.add('error');
+    }
+  });
+});
+
+var pendingUser=null;
+function codeHandoff(t,u,c){
+  pendingUser=u; $('code-title').textContent=t; $('code-who').textContent='@'+u;
+  $('code-value').textContent=c; $('btn-copy').textContent='Copy code'; show('code');
+}
+$('btn-copy').addEventListener('click',function(){
+  var b=this,t=$('code-value').textContent;
+  var d=function(){ b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy code'; },1500); };
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(d,d); else d();
+});
+$('btn-enter').addEventListener('click',function(){ location.href='chat.html'; });
+function goChat(){ location.href='chat.html'; }
+
+(async function init(){
+  try{ await api('me'); location.replace('chat.html'); return; }catch(e){}
+  try{
+    var any=await api('check?name=__probe__');
+    show('signin');
+  }catch(e){
+    show('signup');
+    alertMsg('a-signup',"Can't reach the server. Is it running on the Pi? (node server.js)");
+  }
+})();
+})();
+</script>
+</body>
+</html>
